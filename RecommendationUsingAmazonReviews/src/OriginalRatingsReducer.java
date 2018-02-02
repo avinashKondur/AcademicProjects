@@ -74,7 +74,8 @@ public class OriginalRatingsReducer extends Reducer<Text,Text,Text,Text>{
 			String sentiment = vals[1];
 			if((rating>0 && sentiment.equalsIgnoreCase("positive")) 
 					|| (rating<0 && sentiment.equalsIgnoreCase("negative")) 
-					|| (rating==0 && sentiment.equalsIgnoreCase("neutral")) 
+					|| (rating==0 && sentiment.equalsIgnoreCase("neutral"))
+					|| (rating>0 && rating <1 && sentiment.equalsIgnoreCase("neutral")) 
 					|| sentiment.equalsIgnoreCase("#####")){
 				
 				 context.write(key, new Text(s+"\t"+Double.toString(rating)));

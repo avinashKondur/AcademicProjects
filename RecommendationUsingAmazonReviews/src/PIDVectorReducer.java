@@ -2,7 +2,7 @@ package AmazonReviews;
 
 
 import java.io.IOException;
-import java.util.HashMap;
+
 import java.util.TreeMap;
 
 
@@ -18,22 +18,12 @@ public class PIDVectorReducer extends Reducer<Text,Text,Text,Text>{
 		
 		TreeMap<String, String> pidMap = 
 	             new TreeMap<String, String>();
-		
-		HashMap<String,String> localPid=new HashMap<String,String>();
-		
 		for(Text val : values){
 			String[] s = val.toString().split("\t");
-			
 			if(!pidMap.containsKey(s[0])){
 				pidMap.put(s[0],s[1]);
 			}
-			
 		}
-		
-		/*for(String s: localPid.keySet()){
-			pidMap.put(s,localPid.get(s));
-		}*/
-		
 		context.write(key, new Text(pidMap.toString()));
 			
        
