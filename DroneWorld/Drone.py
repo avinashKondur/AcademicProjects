@@ -8,6 +8,7 @@ from DroneWorld import DroneSimulator
 from Astar import AStartSearch
 from Helpers import  HeuristicFunctions,EuclideanDistance
 from RelaxedAStar import RAStarSearch
+from Plots import PlotPath
 
 class PathFinder:
     
@@ -33,18 +34,19 @@ class PathFinder:
             #identify the block nearer to drone of same color
             dronePaths,success = self.__findSource(color)
             
+            #print(dronePaths)
             if success == True:
                 
                 sourceLoc = list(dronePaths.keys())                                
                 pathLens = sorted([(loc,len(dronePaths[loc])) for loc in sourceLoc], key = lambda p: p[1]) 
-                #print(pathLens[0][])
+                #print(pathLens)
                 sourcePos = list(pathLens[0][0])
                 dronePath = dronePaths[pathLens[0][0]]
         
                 goalPos,blockPath = self.__identifyGoalPosition(pos,color,sourcePos)
                                 
             else:
-                return None, None, False
+                return None, None, None, False
         
         return dronePath, blockPath,goalPos,success        
     
@@ -63,7 +65,7 @@ class PathFinder:
                 
         indices = self.DroneSimulator.GetPossibleGoalPos([x,y,z],color,sourcePos)
         
-        print(sourcePos)            
+        #print(sourcePos)            
         if len(indices) > 0:
             dists = [(index,EuclideanDistance(sourcePos, index)) for index in indices]
             dists = sorted(dists, key = lambda i : i[1])                        
@@ -100,7 +102,7 @@ class PathFinder:
         sourceLoc, validColor = self.DroneSimulator.GetLocationsOfMovableBlock(color,forDrone = True)
         
         if validColor == False:
-            return None,None, False
+            return None, False
         
         dronePaths = dict()        
         
@@ -129,7 +131,8 @@ class PathFinder:
                         
             blockPath,cost = self.SearchAlgo.Search([loc[0],loc[1]-1,loc[2]], goal,self.DroneSimulator, isDrone=False)
             blockPaths[tuple(loc)] = blockPath
-            
+        
+        #print(dronePaths, blockPaths)
         pathLens = [len(dronePaths[tuple(loc)]) + len(blockPaths[tuple(loc)]) for loc in sourceLoc]
         
         minIndexSource = pathLens.index(min(pathLens))
@@ -143,7 +146,7 @@ if __name__ == '__main__':
     goalState = '(4,1,3,red)'
     
     world = DroneSimulator(100,50,100)
-    world.Initialise('data.txt')   
+    world.Initialise('WORLD2.txt')   
     hueristics = HeuristicFunctions()
     astar = AStartSearch(lambda x,y : hueristics.hf(x,y))       
     
@@ -165,6 +168,10 @@ if __name__ == '__main__':
     goalState4 = '(0,0,?,?)'
     dronePath4, blockPath4,goalPos4,success  = pathFinder.FindPath(goalState4)
         
+    plot = PlotPath(world.Grid,blockPath4)
+    plot.showPath()
     
+    plot = PlotPath(world.Grid,dronePath4)
+    plot.showPath()
     
         
