@@ -9,6 +9,7 @@ from Astar import AStartSearch
 from Helpers import  HeuristicFunctions,EuclideanDistance
 from RelaxedAStar import RAStarSearch
 from Plots import PlotPath
+import copy
 
 class PathFinder:
     
@@ -30,10 +31,14 @@ class PathFinder:
             
             #identify which block neeed to be moved
             dronePath, blockPath, success = self.__findPaths(list(goalPos),color)
+            
         else:
+            
+            #print(color)
             #identify the block nearer to drone of same color
             dronePaths,success = self.__findSource(color)
             
+            #print(dronePaths)
             #print(dronePaths)
             if success == True:
                 
@@ -101,6 +106,8 @@ class PathFinder:
         
         sourceLoc, validColor = self.DroneSimulator.GetLocationsOfMovableBlock(color,forDrone = True)
         
+        print(sourceLoc,self.DroneSimulator.GetDronePosition())
+        
         if validColor == False:
             return None, False
         
@@ -143,27 +150,83 @@ class PathFinder:
         
 if __name__ == '__main__':
     
-    goalState = '(4,1,3,red)'
+    goalState = '(4,1,3,blue)'
     
     world = DroneSimulator(100,50,100)
-    world.Initialise('WORLD2.txt')   
+    world.Initialise('sampleworld.txt')   
     hueristics = HeuristicFunctions()
     astar = AStartSearch(lambda x,y : hueristics.hf(x,y))       
     
     pathFinder = PathFinder(world,astar)
     dronePath, blockPath,goalPos,success  = pathFinder.FindPath(goalState)
     
-    goalState1 = '(-4,?,3,red)'
+    print(pathFinder.DroneSimulator.GetDronePosition())
+    
+    plot = PlotPath(world.Grid,blockPath)
+    plot.showPath()
+    
+    plot = PlotPath(world.Grid,dronePath)
+    plot.showPath()
+    
+    
+    world = DroneSimulator(100,50,100)
+    world.Initialise('sampleworld.txt')
+    hueristics = HeuristicFunctions()
+    astar = AStartSearch(lambda x,y : hueristics.hf(x,y))       
+    
+    pathFinder = PathFinder(world,astar)
+    
+    goalState1 = '(-4,?,3,blue)'
     dronePath1, blockPath1,goalPos1,success  = pathFinder.FindPath(goalState1)
-        
+
+    plot = PlotPath(world.Grid,blockPath1)
+    plot.showPath()
+    
+    plot = PlotPath(world.Grid,dronePath1)
+    plot.showPath()
+    
+    world = DroneSimulator(100,50,100)
+    world.Initialise('sampleworld.txt')
+    hueristics = HeuristicFunctions()
+    astar = AStartSearch(lambda x,y : hueristics.hf(x,y))       
+    
+    pathFinder = PathFinder(world,astar)
+    
     goalState2 = '(-2,?,?,?)'
     dronePath2, blockPath2,goalPos2,success  = pathFinder.FindPath(goalState2)
+
+    plot = PlotPath(world.Grid,blockPath2)
+    plot.showPath()
+    
+    plot = PlotPath(world.Grid,dronePath2)
+    plot.showPath()
+    
+    world = DroneSimulator(100,50,100)
+    world.Initialise('sampleworld.txt')
+    hueristics = HeuristicFunctions()
+    astar = AStartSearch(lambda x,y : hueristics.hf(x,y))       
+    
+    pathFinder = PathFinder(world,astar)
     
     goalState3 = '(?,?,?,?)'
     dronePath3, blockPath3,goalPos3,success  = pathFinder.FindPath(goalState3)
     
     raStar = RAStarSearch(lambda x,y : hueristics.hf(x,y))
     pathFinder = PathFinder(world,raStar)
+    
+    plot = PlotPath(world.Grid,blockPath3)
+    plot.showPath()
+    
+    plot = PlotPath(world.Grid,dronePath3)
+    plot.showPath()
+
+
+    world = DroneSimulator(100,50,100)
+    world.Initialise('sampleworld.txt')
+    hueristics = HeuristicFunctions()
+    astar = AStartSearch(lambda x,y : hueristics.hf(x,y))       
+    
+    pathFinder = PathFinder(world,astar)
     
     goalState4 = '(0,0,?,?)'
     dronePath4, blockPath4,goalPos4,success  = pathFinder.FindPath(goalState4)

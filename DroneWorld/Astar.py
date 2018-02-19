@@ -29,6 +29,7 @@ class AStartSearch:
         actions = actionF(parentNode.state,world)
     
         if not actions:
+            print(actions)
             return ("Path does not exists", float('inf'))
         children = []
     

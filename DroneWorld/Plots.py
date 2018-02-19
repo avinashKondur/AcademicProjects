@@ -2,12 +2,12 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.patches as mpatches
-
+import copy
 
 class PlotPath:
     def __init__(self, grid,path):
         self._pathFound = path
-        self._grid = grid
+        self._grid = copy.deepcopy(grid)
 
     def showPath(self):
         fig = plt.figure(figsize=(10, 10), facecolor='w')
@@ -21,10 +21,12 @@ class PlotPath:
         ax.set_xlabel("X Coordinates")
         ax.set_ylabel("Z Coordinates")
         ax.set_zlabel("Y Coordinates")
-
+        
+        #print(self._pathFound)
+        
         for i in self._pathFound:
-            i[0]-=50
-            i[2]-=50
+            i[0]= i[0]-50
+            i[2]= i[2]-50
         xs, ys, zs = zip(*self._pathFound)
         ax.plot(xs, zs, ys, 'o-', lw=2, color='black', ms=1)
         ax.scatter(xcoord, zcoord, ycoord, c=colour, marker='s')
@@ -44,6 +46,7 @@ class PlotPath:
         indices = [[x, y, z] for x, y, z in zip(*(xcoord, ycoord, zcoord))]
         for p in indices:
             if nGrid[p[0]][p[1]][p[2]][0]=='D':
+                print(p)
                 colour=np.append(colour,'black')
             else:
                 colour=np.append(colour,nGrid[p[0]][p[1]][p[2]])

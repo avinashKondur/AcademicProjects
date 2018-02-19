@@ -51,9 +51,13 @@ class ActionFunctions:
             # if the search is for Drone to source block, then the below statement 
             validDrone = False
             if self.isSearchForDonePath == True:
+                
                 DronePos=[newPos[0],newPos[1]+1,newPos[2]]
                 _,validDrone=world.ValidatePos(DronePos,True,True)
-    
+                
+                #if validDrone == False:
+                    #print(validDrone, DronePos)
+                
             if (validBlock == True and validDrone == True) or (validBlock == True and self.isSearchForDonePath == False):
     
                 if dx >= 0 and action[0] >= 0 and action not in modiAction:  # right
@@ -70,7 +74,7 @@ class ActionFunctions:
                     modiAction.append(action)
                 if action not in modiAction:
                     modiAction.append(action)
-    
+        
         return(modiAction)
     
     def __allActions(self):

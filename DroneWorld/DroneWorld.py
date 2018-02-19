@@ -44,12 +44,18 @@ class DroneSimulator:
             print('Drone world should have one Drone. Please correct the input file and restart the process')
             return False                
         
-        self.CurrentDronePos,obj,isValid = self.__getDataFromLine(drones[0])
+        #self.CurrentDronePos,obj,isValid = self.__getDataFromLine(drones[0])
         
-        #print(obj)
-        self.Grid[self.CurrentDronePos[0]][self.CurrentDronePos[1]][self.CurrentDronePos[2]] = obj
+        pos, color = self.ExtractPosColorFromInput(drones[0])
+        self.CurrentDronePos = self.GetPosFromString(pos)
+        isValid = self.ValidatePos(self.CurrentDronePos)
         
-        self.OccupiedPos.append(self.CurrentDronePos)
+        #`print("Drone Position : ", self.CurrentDronePos)
+        if isValid == True:
+            #print(obj)
+            self.Grid[self.CurrentDronePos[0]][self.CurrentDronePos[1]][self.CurrentDronePos[2]] = color
+            
+            self.OccupiedPos.append(self.CurrentDronePos)
         
         if isValid == False:
             return False
@@ -80,14 +86,15 @@ class DroneSimulator:
             if isValid == False:
                 continue
             
+            #print(block)
             #update the block pos dictionary
-            self.OccupiedPos.append(blockPos)
+            self.OccupiedPos.append(list(block))
                                             
             #set the grid with respective Color
-            self.Grid[block[0]][block[1]][block[2]] = str.upper(color)         
+            self.Grid[block[0]][block[1]][block[2]] = blocksDict[block]         
             
             #update the colors dictionary 
-            self.colors[str.upper(color)] = self.colors.get(str.upper(color),0) + 1
+            self.colors[str.upper(blocksDict[block])] = self.colors.get(str.upper(blocksDict[block]),0) + 1
                                                         
             #except IOError:
                 #print('Exception while reading the file - ', fileName)
@@ -220,7 +227,7 @@ class DroneSimulator:
     
     def GetLocationsOfMovableBlock(self, color, forDrone = False):
         
-        
+        print(self.colors)
         if color != '?' and str.upper(color) not in list(self.colors.keys()):
             print("There is no block with color : ", color)                
             return None,False
@@ -244,6 +251,7 @@ class DroneSimulator:
         
     
     def GetDronePosition(self):
+        #print(self.CurrentDronePos)
         return self.CurrentDronePos
     
     def GetRandomEmpty(self):
@@ -287,4 +295,4 @@ class DroneSimulator:
         
 if __name__ == '__main__':
     world = DroneSimulator(100,50,100)
-    world.Initialise('WORLD2.txt')       
+    world.Initialise('sampleworld.txt')       
