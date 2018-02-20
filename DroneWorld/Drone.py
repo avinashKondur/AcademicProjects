@@ -162,11 +162,8 @@ if __name__ == '__main__':
     
     print(pathFinder.DroneSimulator.GetDronePosition())
     
-    plot = PlotPath(world.Grid,blockPath)
-    plot.showPath()
-    
-    plot = PlotPath(world.Grid,dronePath)
-    plot.showPath()
+    plot = PlotPath(world.Grid)
+    plot.showPath(blockPath,dronePath)
     
     
     world = DroneSimulator(100,50,100)
@@ -179,12 +176,10 @@ if __name__ == '__main__':
     goalState1 = '(-4,?,3,blue)'
     dronePath1, blockPath1,goalPos1,success  = pathFinder.FindPath(goalState1)
 
-    plot = PlotPath(world.Grid,blockPath1)
-    plot.showPath()
+    plot = PlotPath(world.Grid)
+    plot.showPath(blockPath1,dronePath1)
     
-    plot = PlotPath(world.Grid,dronePath1)
-    plot.showPath()
-    
+   
     world = DroneSimulator(100,50,100)
     world.Initialise('sampleworld.txt')
     hueristics = HeuristicFunctions()
@@ -195,11 +190,9 @@ if __name__ == '__main__':
     goalState2 = '(-2,?,?,?)'
     dronePath2, blockPath2,goalPos2,success  = pathFinder.FindPath(goalState2)
 
-    plot = PlotPath(world.Grid,blockPath2)
-    plot.showPath()
+    plot = PlotPath(world.Grid)
+    plot.showPath(blockPath2,dronePath2)
     
-    plot = PlotPath(world.Grid,dronePath2)
-    plot.showPath()
     
     world = DroneSimulator(100,50,100)
     world.Initialise('sampleworld.txt')
@@ -210,17 +203,9 @@ if __name__ == '__main__':
     
     goalState3 = '(?,?,?,?)'
     dronePath3, blockPath3,goalPos3,success  = pathFinder.FindPath(goalState3)
+    plot = PlotPath(world.Grid)
+    plot.showPath(blockPath3,dronePath3)
     
-    raStar = RAStarSearch(lambda x,y : hueristics.hf(x,y))
-    pathFinder = PathFinder(world,raStar)
-    
-    plot = PlotPath(world.Grid,blockPath3)
-    plot.showPath()
-    
-    plot = PlotPath(world.Grid,dronePath3)
-    plot.showPath()
-
-
     world = DroneSimulator(100,50,100)
     world.Initialise('sampleworld.txt')
     hueristics = HeuristicFunctions()
@@ -230,11 +215,8 @@ if __name__ == '__main__':
     
     goalState4 = '(0,0,?,?)'
     dronePath4, blockPath4,goalPos4,success  = pathFinder.FindPath(goalState4)
-        
-    plot = PlotPath(world.Grid,blockPath4)
-    plot.showPath()
     
-    plot = PlotPath(world.Grid,dronePath4)
-    plot.showPath()
+    plot = PlotPath(world.Grid)
+    plot.showPath(blockPath4,dronePath4)
     
         
