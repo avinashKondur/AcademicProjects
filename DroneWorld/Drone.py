@@ -102,8 +102,8 @@ class PathFinder:
             else:
                 sourcePos,sourcePosActions = self.__identifySourcePosition(world,goalState,color)
             
-            # perform actions to move any blocks required for source block to be available to move
-            actions += sourcePosActions
+                # perform actions to move any blocks required for source block to be available to move
+                actions += sourcePosActions
             
             #perform actions required to move the source block
             actions += self.__getActions(world, sourcePos, goalState)
@@ -195,6 +195,7 @@ class PathFinder:
             
             #Perform the move in the world.
             world.Move(dx,dy,dz)
+            i+= 1
             
         if hasBlock == True:
             success = world.Release()
