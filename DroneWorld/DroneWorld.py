@@ -6,7 +6,8 @@ Created on Sun Feb  4 11:08:37 2018
 """
 import numpy as np
 import random
-from math import sqrt
+#from math import sqrt
+from Helpers import  EuclideanDistance
 
 
 class DroneSimulator:
@@ -48,7 +49,7 @@ class DroneSimulator:
         
         pos, color = self.ExtractPosColorFromInput(drones[0])
         self.CurrentDronePos = self.GetPosFromString(pos)
-        isValid = self.ValidatePos(self.CurrentDronePos)
+        self.CurrentDronePos,isValid = self.ValidatePos(self.CurrentDronePos, True)
         
         #`print("Drone Position : ", self.CurrentDronePos)
         if isValid == True:
@@ -56,6 +57,8 @@ class DroneSimulator:
             self.Grid[self.CurrentDronePos[0]][self.CurrentDronePos[1]][self.CurrentDronePos[2]] = color
             
             self.OccupiedPos.append(self.CurrentDronePos)
+        
+            print("Drone added to the world = " + str(self.OccupiedPos) + str(self.CurrentDronePos), str(isValid))
         
         if isValid == False:
             return False
@@ -67,11 +70,11 @@ class DroneSimulator:
             if block.strip() == '':
                 continue
             
-            #blockPos,color,isValid = self.__getDataFromLine(block)
+            #OccupiedPos,color,isValid = self.__getDataFromLine(block)
             pos, color = self.ExtractPosColorFromInput(block)
-            blockPos = self.GetPosFromString(pos)
+            pos = self.GetPosFromString(pos)
             
-            blocksDict[tuple(blockPos)] = str.upper(color)
+            blocksDict[tuple(pos)] = str.upper(color)
                             
             
         
@@ -103,11 +106,11 @@ class DroneSimulator:
     
     def Attach(self):
         dronePos = self.CurrentDronePos
-        if (dronePos[0], dronePos[1]-1, dronePos[2]) in self.BlockPos:
+        if (dronePos[0], dronePos[1]-1, dronePos[2]) in self.OccupiedPos:
             self.IsBlockAttached = True
             return True
         else:
-            print("Block cannot be attached as there is not block below.")
+            print("Block cannot be attached as there is no block below.")
             return False
     
     def Move(self, dx,dy,dz):
@@ -116,47 +119,47 @@ class DroneSimulator:
             print("displacement length should not exceed more than 1 in length")
             return False
         
-        newDonePos = (self.CurrentDronePos[0] + dx, self.CurrentDronePos[1]+dy, self.CurrentDronePos[2]+dz)
+        newDronePos = [self.CurrentDronePos[0] + dx, self.CurrentDronePos[1]+dy, self.CurrentDronePos[2]+dz]
         
-        if newDonePos in self.OccupiedPos:
+        if newDronePos in self.OccupiedPos:
             print("Destination square for drone is occupied")
             return False
         
         if self.IsBlockAttached:
-            newBlockPos = (newDonePos[0],newDonePos[1]-1,newDonePos[2])
+            newOccupiedPos = [newDronePos[0],newDronePos[1]-1,newDronePos[2]]
             
-            if newBlockPos in self.BlockPos:
+            if newOccupiedPos in self.OccupiedPos:
                 print("Drone has block attached and the new position has a block obstructing the dron movement")
                 return False
             
-            currentBlockPos = (self.CurrentDronePos[0] , self.CurrentDronePos[1]-1, self.CurrentDronePos[2])
+            currentOccupiedPos = [self.CurrentDronePos[0] , self.CurrentDronePos[1]-1, self.CurrentDronePos[2]]
             
             #move the block to new Position
-            self.Grid[newBlockPos[0]][newBlockPos[1]][newBlockPos[2]] = self.Grid[currentBlockPos[0]][currentBlockPos[1]][currentBlockPos[2]]
-            self.OccupiedPos.append(newBlockPos)
+            self.Grid[newOccupiedPos[0]][newOccupiedPos[1]][newOccupiedPos[2]] = self.Grid[currentOccupiedPos[0]][currentOccupiedPos[1]][currentOccupiedPos[2]]
+            self.OccupiedPos.append(newOccupiedPos)
             
-            self.Grid[currentBlockPos[0]][currentBlockPos[1]][currentBlockPos[2]] = ''
-            self.OccupiedPos.remove(currentBlockPos)
+            self.Grid[currentOccupiedPos[0]][currentOccupiedPos[1]][currentOccupiedPos[2]] = ''
+            self.OccupiedPos.remove(currentOccupiedPos)
             
-        # move the Grid to new Position
-        self.Grid[newDonePos[0]][newDonePos[1]][newDonePos[2]] = self.Grid[self.CurrentDronePos[0]][self.CurrentDronePos[1]][self.CurrentDronePos[2]]
-        self.OccupiedPos.append(newDonePos)
+        # move the Drone to new Position
+        self.Grid[newDronePos[0]][newDronePos[1]][newDronePos[2]] = self.Grid[self.CurrentDronePos[0]][self.CurrentDronePos[1]][self.CurrentDronePos[2]]
+        self.OccupiedPos.append(newDronePos)
         
         self.Grid[self.CurrentDronePos[0]][self.CurrentDronePos[1]][self.CurrentDronePos[2]] = ''
         self.OccupiedPos.remove(self.CurrentDronePos)
         
-        self.CurrentDronePos = newDonePos
+        self.CurrentDronePos = newDronePos
                 
         return True
             
     def Release(self):
         if not self.IsBlockAttached:
-            print("There is not block atttached and Release cannot be performed")
+            print("There is no block atttached and Release cannot be performed")
             return False
                 
-        currentBlockPos = (self.CurrentDronePos[0] , self.CurrentDronePos[1]-1, self.CurrentDronePos[2])
-        while (currentBlockPos[0] , currentBlockPos[1]-1, currentBlockPos[2]) not in self.BlockPos:
-            currentBlockPos = (currentBlockPos[0] , currentBlockPos[1]-1, currentBlockPos[2])
+        currentOccupiedPos = (self.CurrentDronePos[0] , self.CurrentDronePos[1]-1, self.CurrentDronePos[2])
+        while (currentOccupiedPos[0] , currentOccupiedPos[1]-1, currentOccupiedPos[2]) not in self.OccupiedPos:
+            currentOccupiedPos = (currentOccupiedPos[0] , currentOccupiedPos[1]-1, currentOccupiedPos[2])
             
             
         self.IsBlockAttached = False    
@@ -227,14 +230,14 @@ class DroneSimulator:
     
     def GetLocationsOfMovableBlock(self, color, forDrone = False):
         
-        print(self.colors)
+        '''print(self.colors)
         if color != '?' and str.upper(color) not in list(self.colors.keys()):
             print("There is no block with color : ", color)                
             return None,False
         
         if color == '?':            
             color = random.choice(list(self.colors.keys()))
-            print("Color is not mentioned in the input, so randmonly choosen color is : ",color)
+            print("Color is not mentioned in the input, so randmonly choosen color is : ",color)'''
             
         nGrid = np.asarray(self.Grid)        
         
@@ -289,10 +292,75 @@ class DroneSimulator:
             #print('len(yLevelIndices)=',yLevelIndices)
         
         #print('yLevelIndices = ',yLevelIndices)
-        return yLevelIndices            
-            
+        return yLevelIndices 
+           
+    def IsPositionAvailable(self,pos):        
+            return pos not in self.OccupiedPos
         
+    def GetColor(self,pos):
+        x, y, z = pos[0],pos[1],pos[2]
+        return self.Grid[x][y][z]
+    
+    def GetRandomAvailableColor(self):
+        return random.choice(list(self.colors.keys()))
+    
+    def GetMaxHeight(self, goalState=None):
         
+         '''
+         Gets the max height of the plane x,z when goalState is not None.
+         if goalState is None, returns the max height of the world
+         '''
+         nGrid = np.asarray(self.Grid)
+         xi,yi,zi = np.where(nGrid != '')
+         indices = [[x,y,z] for x,y,z in zip(*(xi,yi,zi))]
+         
+         if goalState != None:
+             if nGrid[goalState[0]][goalState[1]][goalState[2]] == '' :
+                 maxHeight = 0
+             else:
+                 maxHeight = max(list(filter(lambda p : p[0] == goalState[0] and p[2] == goalState[2] , indices)))[1]
+         else:
+             maxHeight = max(indices)[1]
+         return maxHeight
+     
+    def GetPositions(self,goalState, k, color, param):
+        
+        worldHeight = self.GetMaxHeight()
+        planeHeight = self.GetMaxHeight(goalState)
+         
+        nGrid = np.asarray(self.Grid)
+         
+        if param[0] == 'Blocks':
+            xi,yi,zi = np.where(nGrid != '')
+            indices = [[x,y,z] for x,y,z in zip(*(xi,yi,zi))]
+            indices = list(filter(lambda p : p[1] >= planeHeight and p[1] <= worldHeight 
+                                  and nGrid[p[0]][p[1]+1][p[2]] == '' 
+                                  and nGrid[p[0]][p[1]][p[2]] != color
+                                  and p not in param[1], indices))
+            if indices == []:
+               indices = [[x,y,z] for x,y,z in zip(*(xi,yi,zi))]
+               indices = list(filter(lambda p : nGrid[p[0]][p[1]+1][p[2]] == '' 
+                                     and nGrid[p[0]][p[1]][p[2]] != color
+                                     and p not in param[1], indices))
+                              
+        if param[0] == 'Empty':
+            xi,yi,zi = np.where(nGrid == '')
+            indices = [[x,y,z] for x,y,z in zip(*(xi,yi,zi))]
+            indices = list(filter(lambda p : nGrid[p[0]][p[1]-1][p[2]] != '', indices))
+        
+        dists = [(index,EuclideanDistance(goalState, index)) for index in indices]
+        dists = sorted(dists, key = lambda i : i[1])
+        return [ block[0] for block in dists[:k]]
+    
+    def GetAvailableBlocks(self, color):
+        
+        nGrid = np.asarray(self.Grid)
+        xi,yi,zi = np.where(nGrid == color)
+        indices = [[x,y,z] for x,y,z in zip(*(xi,yi,zi))]
+        
+        return indices
+        
+    
 if __name__ == '__main__':
     world = DroneSimulator(100,50,100)
     world.Initialise('sampleworld.txt')       
