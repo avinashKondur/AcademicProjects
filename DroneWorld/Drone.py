@@ -15,7 +15,8 @@ class PathFinder:
     def __init__(self,droneSimulator,searchAlgorithm):
         
         self.DroneSimulator = droneSimulator
-        self.SearchAlgo = searchAlgorithm        
+        self.SearchAlgo = searchAlgorithm
+        self.__previousGoalStates = []        
     
     
     
