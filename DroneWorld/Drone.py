@@ -9,18 +9,54 @@ from Astar import AStartSearch
 from Helpers import  HeuristicFunctions,EuclideanDistance
 from RelaxedAStar import RAStarSearch
 from Plots import PlotPath
+import random
+import time
 
 class PathFinder:
     
-    def __init__(self,droneSimulator,searchAlgorithm):
+    def __init__(self,world,searchAlgorithm):
         
-        self.DroneSimulator = droneSimulator
+        self.world = world
         self.SearchAlgo = searchAlgorithm
-        self.__previousGoalStates = []        
+        self.__goalStates = [] 
+        self.finalActions = dict()
     
     
-    
-    def GetActions(self,world,goalState,color):
+    def AchieveGoalStates(self, goalStates):
+        
+        self.__goalStates = [goal[0] for goal in goalStates]
+        
+        for goal in goalStates:
+            
+            start_time = time.time()
+            
+            goalState, color = goal[0], goal[1]
+            
+            print('*************************************************************')
+            print('Idendifying actions for goal state = {}'.format(goal))
+            print('*************************************************************')
+            
+            #identify goalstate if incomplete and also all actions required to perform
+            goalState, actions = self.__identifyActions(self.world,goalState, color)
+            
+            print('obtained actions ....\n Starting performing actions .... ')
+            
+            self.finalActions[tuple(goalState)] = actions
+            
+            #iterate through all the actions and perform actions
+            self.__performActions(actions, self.world)
+            
+            print('All actions are performed.......')
+            
+            #add the new goalState to the list if it empty, so that next steps in identify the goalState will eliminate this.
+            if goal[0].count('?') > 0 :
+                self.__goalStates.append(goalState)  
+            
+            self.__calculateTime(start_time)
+        
+        
+        
+    def __identifyActions(self,world,goalState,color):
         
         #identify if goal is complete or not
         isGoalComplete = False if goalState.count('?') > 0 else True
@@ -37,16 +73,40 @@ class PathFinder:
                 
         # identify goal state if it is incomplete        
         if isGoalComplete == False:
-            goalState = self.__identifyGoalState(world,goalState,color)
+            print('Goal state is not complete... identifying the goal state')
+            
+            goalState,color = self.__identifyGoalState(world,goalState,color)
+            
+            print('Goalstate successfully identified, new goal state is {}, {}'.format(goalState,color))
+        
+        print('Identifying the actions on complete goal {}, {}'.format(goalState,color))
         
         #identify actions for the complete goal state
         actions = self.__getActionsForCompleteGoal(world,goalState,color)
         
-        return actions
+        print('Actions are successfully identified inorder to achieve goalState {}'.format(actions))
+        
+        return goalState, actions
     
     def __identifyGoalState(self,world,goalState,color):
-        #will update the code once Pahuni sends it
-        pass
+        #xMissing, yMissing, zMissing = goalState[0] == '?', goalState[1] == '?', goalState[2] == '?'
+        isColorGiven = False if color == '?' else True
+        
+        possiblePos = world.checkGoalAlreadyReached(color, goalState,self.__goalStates)
+
+
+        if possiblePos != []:
+            newGoalState=random.choice(possiblePos)            
+            if isColorGiven == False:
+                color=world.GetColor(newGoalState)                
+        else:
+            saved=world.GetPossibleGoalPos(goalState)
+            saved=world.hasSupportingBlock(saved)
+            #avail = [m if m not in self.__goalStates else None for m in saved]
+            possiblePos = list(filter(lambda a: a not in self.__goalStates, saved))
+            newGoalState=self.__getNearestPositions(possiblePos,world.GetDronePosition())
+            
+        return newGoalState,color
     
     def __getActionsForCompleteGoal(self, world,goalState,color):
                 
@@ -58,7 +118,7 @@ class PathFinder:
         #if the target location is empty and there is a supporting block below
         if currentHeight == goalHeight-1:
             sourcePos = self.__identifySourcePosition(world,goalState,color)
-            actions = self.__getActions(world, sourcePos, goalState)
+            actions = self.__getActions(world, sourcePos, goalState,color)
         
         # if the target location does not have supporting block below
         if currentHeight < goalHeight-1:
@@ -71,12 +131,16 @@ class PathFinder:
             height = currentHeight+1
             #create actions for neighbours and source block
             for neighbor in neighbours:
-                actions += self.__getActions(world, neighbor, [x,height,z])
+                #get block color
+                blockColor = world.GetColor([x,height,z])
+                
+                actions += self.__getActions(world, neighbor, [x,height,z],blockColor)
+                
                 height += 1
             
             actions += sourcePosActions
             
-            actions += self.__getActions(world, sourcePos, goalState)
+            actions += self.__getActions(world, sourcePos, goalState,color)
         
         #if the target location is occupied and there are blocks on top of it.
         if currentHeight > goalHeight-1:
@@ -87,9 +151,12 @@ class PathFinder:
             saved = []
             #create actions for neighbours and source block
             for neighbor in neighbours:
-                actions += self.__getActions(world,  [x,height,z],neighbor)
+                
                 #get block color
                 blockColor = world.GetColor([x,height,z])
+                
+                actions += self.__getActions(world,  [x,height,z],neighbor,blockColor)
+                
                 
                 #if block color matches with goal color then save it
                 if blockColor == color:
@@ -106,14 +173,15 @@ class PathFinder:
                 actions += sourcePosActions
             
             #perform actions required to move the source block
-            actions += self.__getActions(world, sourcePos, goalState)
+            actions += self.__getActions(world, sourcePos, goalState,color)
         
         return actions
 
     def __identifySourcePosition(self,world,goalState,color):
         
         sourceLoc = world.GetLocationsOfMovableBlock(color)
-
+        
+        print(sourceLoc)
         # if there is a block already available in the upper level, we will pick the one that is is nearer
         if sourceLoc != []:
             dists = [(index,EuclideanDistance(goalState, index)) for index in sourceLoc]
@@ -136,27 +204,31 @@ class PathFinder:
         
         #create actions for neighbours and source block
         for neighbor in neighbours:
-            actions += self.__getActions(world,  [x,height,z],neighbor)
+            
+            #get block color
+            blockColor = world.GetColor([x,height,z])
+            
+            actions += self.__getActions(world,  [x,height,z],neighbor,blockColor)
             height -= 1
         
         return pos, actions
     
-    def __getActions(self,world, source, goal):
+    def __getActions(self,world, source, goal,blockColor):
         
-        return [('Drone',source,goal),('Block',source,goal)]
+        return [('Drone',source,blockColor),('Block',source,goal,blockColor)]
     
     def __getBlocks(self,k,world,goalState,color):
         '''2) when blocks need to be placed
                 a) pick  planes with height >= height(Xg,Zg) and height <= maxHeight(world) + 1                
                 b) identify the K planes with minimum euclidian distance from goal (Xg,Zg) plane'''
                
-        return world.GetPositions(goalState, k, color,  ('Blocks',self.__previousGoalStates))    
+        return world.GetPositions(goalState, k, color,  ('Blocks',self.__goalStates))    
     
     def __getEmptyLocations(self,k,world,goalState,color):
         '''1) when blocks need to be removed
                 a) pick  planes with height <= height(Xg,Zg) or height <= maxHeight(world) + 1                
                 b) identify the K planes with minimum euclidian distance from goal (Xg,Zg) plane'''
-        return world.GetPositions(goalState, k, color ,('Empty',self.__previousGoalStates))        
+        return world.GetPositions(goalState, k, color ,('Empty',self.__goalStates))        
     
     def __getNearestPositions(self,saved,goalState):
         
@@ -166,8 +238,8 @@ class PathFinder:
         #first one is the min distance point
         return dists[0][0]
     
-    def PerformActions(self,actions, world):
-        for action in actions():            
+    def __performActions(self,actions, world):
+        for action in actions:            
             if action[0] == 'Drone':
                 self.__action(world, world.GetDronePosition(), action[1], False)
             
@@ -176,14 +248,24 @@ class PathFinder:
     
     def __action(self, world, startPos, goalPos, hasBlock):
         
+        print('Identifying the path for startPos = {} and goalPos = {} for {}'.format(startPos,goalPos, 'Drone' if hasBlock == False else 'Block'))
+        
+        start_time = time.time()
+        
         path,_ = self.SearchAlgo.Search(startPos,goalPos,world, isDrone = (hasBlock == False))
+        
+        self.__calculateTime(start_time)
+        
+        print('path identified successfully with length = {}...... path = {} '.format(len(path),path))
         
         #Attach drone to the block
         if hasBlock == True:            
             success = world.Attach()
             if success == True:
                 print('Block attached successfully')
-            
+        
+        print('Performing moves in the world using obtained path')
+        
         steps = len(path)
         i = 0
         oldPos = startPos                
@@ -201,24 +283,25 @@ class PathFinder:
             success = world.Release()
             if success == True:
                 print('Block released successfully')
+        
+        print('Successfully performed moves')
+        
+    def __calculateTime(self, startTime):        
+        print("--- time take %s seconds  = {} ---\n" % (time.time() - startTime))
+    
             
         
 if __name__ == '__main__':
     
-    goalState = '(6,0,-27,yellow)'
+    #goalState = '(6,0,-27,yellow)'
     
     world = DroneSimulator(100,50,100)
     world.Initialise('grid3.txt')   
     hueristics = HeuristicFunctions()
-    astar = AStartSearch(lambda x,y : hueristics.hf(x,y))       
+    astar = AStartSearch(lambda x,y : hueristics.hf2(x,y))
+    #astar = RAStarSearch(lambda x,y : hueristics.hf2(x,y))
+
+    goalStates = world.ReadGoalFile("test.txt")       
     
     pathFinder = PathFinder(world,astar)
-    dronePath, blockPath,goalPos,success  = pathFinder.FindPath(goalState)
-    
-    
-    
-    blockPath = [[56, 6, 86],[56, 6, 85],[56, 6, 84],[56, 6, 83],[56, 6, 82],[56, 6, 81],[56, 6, 80],[56, 6, 79],[56, 6, 78],[56, 6, 77],[56, 6, 76],[56, 6, 75],[56, 6, 74],[56, 6, 73],[56, 6, 72],[56, 6, 71],[56, 6, 70],[56, 6, 69],[56, 6, 68],[56, 6, 67],[56, 6, 66],[56, 6, 65],[56, 6, 64],[56, 6, 63],[56, 6, 62],[56, 6, 61],[56, 6, 60],[56, 6, 59],[56, 6, 58],[56, 6, 57],[56, 6, 56],[56, 6, 55],[56, 6, 54],[56, 6, 53],[56, 6, 52],[56, 6, 51],[56, 6, 50],[56, 6, 49],[56, 6, 48],[56, 6, 47],[56, 6, 46],[56, 6, 45],[56, 6, 44],[56, 6, 43],[56, 6, 42],[56, 6, 41],[56, 6, 40],[56, 6, 39],[56, 6, 38],[56, 6, 37],[56, 6, 36],[56, 6, 35],[56, 6, 34],[56, 6, 33],[56, 6, 32],[56, 6, 31],[56, 6, 30],[56, 6, 29],[56, 6, 28],[56, 6, 27],[56, 6, 26],[56, 6, 25],[56, 6, 24]]    
-    world = DroneSimulator(100,50,100)
-    world.Initialise('grid3.txt')
-    plot = PlotPath(world.Grid)
-    plot.showPath(blockPath,dronePath)
+    pathFinder.AchieveGoalStates(goalStates)
