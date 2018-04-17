@@ -315,7 +315,7 @@ class DroneSimulator:
          indices = [[x,y,z] for x,y,z in zip(*(xi,yi,zi))]
          
          if goalState != None:
-             if nGrid[goalState[0]][goalState[1]][goalState[2]] == '' :
+             if nGrid[goalState[0]][0][goalState[2]] == '' :
                  maxHeight = 0
              else:
                  maxHeight = max(list(filter(lambda p : p[0] == goalState[0] and p[2] == goalState[2] , indices)))[1]
@@ -346,7 +346,8 @@ class DroneSimulator:
         if param[0] == 'Empty':
             xi,yi,zi = np.where(nGrid == '')
             indices = [[x,y,z] for x,y,z in zip(*(xi,yi,zi))]
-            indices = list(filter(lambda p : nGrid[p[0]][p[1]-1][p[2]] != '', indices))
+            indices = list(filter(lambda p : nGrid[p[0]][p[1]-1][p[2]] != '' or p[1] == 0, indices))
+            indices = list(filter(lambda p : p not in param[1], indices))
         
         dists = [(index,EuclideanDistance(goalState, index)) for index in indices]
         dists = sorted(dists, key = lambda i : i[1])

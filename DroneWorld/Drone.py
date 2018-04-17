@@ -68,7 +68,7 @@ class PathFinder:
             #identify source position that can be moved to goal state
             sourcePos,sourcePosActions = self.__identifySourcePosition(world,goalState,color)
             
-            height = currentHeight
+            height = currentHeight+1
             #create actions for neighbours and source block
             for neighbor in neighbours:
                 actions += self.__getActions(world, neighbor, [x,height,z])
@@ -87,7 +87,7 @@ class PathFinder:
             saved = []
             #create actions for neighbours and source block
             for neighbor in neighbours:
-                actions += self.__getActions(world, neighbor, [x,height,z])
+                actions += self.__getActions(world,  [x,height,z],neighbor)
                 #get block color
                 blockColor = world.GetColor([x,height,z])
                 
@@ -136,7 +136,7 @@ class PathFinder:
         
         #create actions for neighbours and source block
         for neighbor in neighbours:
-            actions += self.__getActions(world, neighbor, [x,height,z])
+            actions += self.__getActions(world,  [x,height,z],neighbor)
             height -= 1
         
         return pos, actions
